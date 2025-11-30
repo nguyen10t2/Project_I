@@ -69,21 +69,21 @@ async fn main() {
         }
 
         if !visualizer.found {
+            elapsed_duration = start_time.elapsed();
             if step_delay <= 0.0001 {
                 time_accumulator += get_frame_time() as f64;
-                elapsed_duration = Instant::now() - start_time;
                 for _ in 0..STEPS_PER_FRAME {
                     visualizer.step(&maze, current_heuristic);
                     steps_count += 1;
                     time_accumulator = 0.0;
                     if visualizer.found {
+                        elapsed_duration = start_time.elapsed();
                         break;
                     }
                 }
             }
             else {
                 time_accumulator += get_frame_time() as f64;
-                elapsed_duration = Instant::now() - start_time;
                 if time_accumulator >= step_delay {
                     visualizer.step(&maze, current_heuristic);
                     steps_count += 1;
