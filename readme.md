@@ -32,7 +32,7 @@ A real-time visualization of the **A\* pathfinding algorithm** navigating throug
 | `5` | Chebyshev | Maximum of absolute differences (L∞ norm) |
 | `6` | Euclidean Squared | Euclidean without square root (faster) |
 | `7` | Weighted Manhattan | Manhattan × 2 (aggressive) |
-| `8` | Manhattan Tiebreaker | Manhattan × 1.001 (breaks ties) |
+| `8` | Manhattan Tiebreaker | Manhattan x (1 + DirectionBreak) |
 
 ### 🚀 Getting Started
 
@@ -121,7 +121,7 @@ pub const STEPS_PER_FRAME: usize = 120;   // Steps per frame
 | `5` | Chebyshev | Giá trị lớn nhất của hiệu tuyệt đối (chuẩn L∞) |
 | `6` | Euclidean Squared | Euclidean không căn bậc 2 (nhanh hơn) |
 | `7` | Weighted Manhattan | Manhattan × 2 (tích cực) |
-| `8` | Manhattan Tiebreaker | Manhattan × 1.001 (phá vỡ đồng điểm) |
+| `8` | Manhattan Tiebreaker | Manhattan x (1 + Chi phí đẳng hướng) |
 
 ### 🚀 Bắt đầu
 
