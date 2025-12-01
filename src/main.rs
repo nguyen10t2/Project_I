@@ -81,6 +81,15 @@ async fn main() {
             steps_count = 0;
         }
 
+        if is_key_pressed(KeyCode::B) {
+            current_algo = Algorithm::Braid;
+            maze = Maze::new(MAZE_WIDTH, MAZE_HEIGHT, current_algo);
+            visualizer = AStarVisualizer::new(&maze);
+            start_time = Instant::now();
+            elapsed_duration = Duration::ZERO;
+            steps_count = 0;
+        }
+
         if is_key_pressed(KeyCode::Space) {
             maze = Maze::new(MAZE_WIDTH, MAZE_HEIGHT, current_algo);
             visualizer = AStarVisualizer::new(&maze);
@@ -121,6 +130,7 @@ async fn main() {
             heuristic_name,
             elapsed_duration,
             steps_count,
+            visualizer.path.as_ref().map_or(0, |p| p.len()),
             visualizer.found,
         );
 
@@ -132,6 +142,7 @@ fn draw_ui(
     heuristic_name: &str,
     elapsed_duration: std::time::Duration,
     steps_count: usize,
+    distance: usize,
     found: bool,
 ) {
     use crate::constants::{MAZE_HEIGHT, TILE_SIZE, UI_HEIGHT, WINDOW_WIDTH};
@@ -159,9 +170,10 @@ fn draw_ui(
 
     draw_text(
         format!(
-            "Time: {:.4}s | Steps: {}",
-            elapsed_duration.as_secs_f32(),
-            steps_count
+            "Time: {:.4}s | Steps: {} | Distance: {}",
+            elapsed_duration.as_secs_f32(), 
+            steps_count,
+            distance,
         )
         .as_str(),
         text_x,
@@ -171,7 +183,7 @@ fn draw_ui(
     );
 
     draw_text(
-        "[R] Backtracker | [P] Prim's Algo",
+        "[R] Backtracker | [P] Prim's Algo | [B] Braid Maze",
         text_x,
         ui_y_start + 25.0 + line_spacing * 2.0,
         20.0,

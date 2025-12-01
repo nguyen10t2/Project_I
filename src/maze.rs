@@ -8,13 +8,14 @@ use ::rand::Rng;
 use ::rand::seq::SliceRandom;
 use ::rand::prelude::IndexedRandom;
 
-use crate::constants::TILE_SIZE;
+use crate::constants::{DENSITY, TILE_SIZE};
 use crate::node::Node;
 
 #[derive(Clone, Copy)]
 pub enum Algorithm {
     RecursiveBacktracker,
     Prims,
+    Braid,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -50,10 +51,16 @@ impl Maze {
         match alo {
             Algorithm::Prims => {
                 Maze::generate_prims(&mut grid, &mut rng, start.x, start.y, width, height);
-            }
+            },
             Algorithm::RecursiveBacktracker => {
                 grid[start.y][start.x] = Tile::Path;
                 Maze::recursive_backtracker(&mut grid, &mut rng, start.x, start.y, width, height);
+            },
+            Algorithm::Braid => {
+                grid[start.y][start.x] = Tile::Path;
+                Maze::generate_prims(&mut grid, &mut rng, start.x, start.y, width, height);
+                
+                Maze::add_cycles(&mut grid, &mut rng, width, height, DENSITY);
             }
         }
 
@@ -204,6 +211,70 @@ impl Maze {
                             y: ny as usize,
                         });
                     }
+                }
+            }
+        }
+    }
+
+    pub fn add_cycles(
+        grid: &mut Vec<Vec<Tile>>,
+        rng: &mut ::rand::rngs::ThreadRng,
+        width: usize,
+        height: usize,
+        density: f32,
+    ) {
+        let mut dead_ends: Vec<Node> = Vec::new();
+
+        let directions = [(0, 1), (0, -1), (1, 0), (-1, 0)];
+
+        for y in 1..height - 1 {
+            for x in 1..width - 1 {
+                if grid[y][x] == Tile::Path {
+                    let mut wall_count = 0;
+                    for (dx, dy) in &directions {
+                        let nx = x as isize + dx;
+                        let ny = y as isize + dy;
+                        if Self::in_bounds(nx, ny, width, height) {
+                            if grid[ny as usize][nx as usize] == Tile::Wall {
+                                wall_count += 1;
+                            }
+                        }
+                    }
+                    if wall_count >= 3 {
+                        dead_ends.push(Node { x, y });
+                    }
+                }
+            }
+        }
+
+        dead_ends.shuffle(rng);
+
+        let remove_count = (dead_ends.len() as f32 * density) as usize;
+
+        for i in 0..remove_count {
+            let node = dead_ends[i];
+
+            let mut potential_walls= Vec::new();
+
+            let jump_dirs = [(0, -2), (0, 2), (-2, 0), (2, 0)];
+
+            for (dx, dy) in jump_dirs {
+                let nx = node.x as isize + dx;
+                let ny = node.y as isize + dy;
+
+                if Self::in_bounds(nx, ny, width, height) {
+                    if grid[ny as usize][nx as usize] == Tile::Path {
+                        potential_walls.push((dx, dy));
+                    }
+                }
+            }
+
+            if let Some((dx, dy)) = potential_walls.choose(rng) {
+                let wall_x = node.x as isize + dx / 2;
+                let wall_y = node.y as isize + dy / 2;
+
+                if Self::in_bounds(wall_x, wall_y, width, height) {
+                    grid[wall_y as usize][wall_x as usize] = Tile::Path;
                 }
             }
         }

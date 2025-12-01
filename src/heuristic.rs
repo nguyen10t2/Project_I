@@ -2,7 +2,9 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 
-use crate::node::Node;
+use crate::{constants::{MAZE_HEIGHT, MAZE_WIDTH}, node::Node};
+
+use std::f32::consts::PI;
 
 pub fn mahattan(a: Node, b: Node) -> f32 {
     (a.x.abs_diff(b.x) + a.y.abs_diff(b.y)) as f32
@@ -46,7 +48,18 @@ pub fn weighted_manhattan(a: Node, b: Node) -> f32 {
     h * 5.0
 }
 
-pub fn weighted_manhattan_tiebreaker(a: Node, b: Node) -> f32 {
+pub fn direction(a: Node, goal: Node, width: usize, height: usize) -> f32 {
+    let dx = (goal.x as isize - a.x as isize) as f32;
+    let dy = (goal.y as isize - a.y as isize) as f32;
+
+    let scaled_dx = dx / width as f32;
+    let scaled_dy = dy / height as f32;
+
+    scaled_dy.atan2(scaled_dx)
+}
+
+pub fn manhattan_tiebreaker(a: Node, b: Node) -> f32 {
     let h = (a.x.abs_diff(b.x) + a.y.abs_diff(b.y)) as f32;
-    h * 10.0
+    let dir = direction(a, b, MAZE_WIDTH, MAZE_HEIGHT);
+    h * 1.1 + dir
 }
