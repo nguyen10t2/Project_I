@@ -28,7 +28,7 @@ A real-time visualization of the **A\* pathfinding algorithm** navigating throug
 | `1` | Manhattan | Sum of absolute differences (L1 norm) |
 | `2` | Euclidean | Straight-line distance (L2 norm) |
 | `3` | Diagonal | Optimized for 8-directional movement |
-| `4` | Uniform Cost Search | No heuristic (Dijkstra's algorithm) |
+| `4` | Uniform Cost Search | No heuristic |
 | `5` | Chebyshev | Maximum of absolute differences (L∞ norm) |
 | `6` | Euclidean Squared | Euclidean without square root (faster) |
 | `7` | Weighted Manhattan | Manhattan × 2 (aggressive) |
@@ -117,7 +117,7 @@ pub const STEPS_PER_FRAME: usize = 120;   // Steps per frame
 | `1` | Manhattan | Tổng hiệu tuyệt đối (chuẩn L1) |
 | `2` | Euclidean | Khoảng cách đường thẳng (chuẩn L2) |
 | `3` | Diagonal | Tối ưu cho di chuyển 8 hướng |
-| `4` | Uniform Cost Search | Không dùng heuristic (thuật toán Dijkstra) |
+| `4` | Uniform Cost Search | Không dùng heuristic |
 | `5` | Chebyshev | Giá trị lớn nhất của hiệu tuyệt đối (chuẩn L∞) |
 | `6` | Euclidean Squared | Euclidean không căn bậc 2 (nhanh hơn) |
 | `7` | Weighted Manhattan | Manhattan × 2 (tích cực) |
