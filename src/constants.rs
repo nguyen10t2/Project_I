@@ -22,12 +22,12 @@ pub const HEURISTIC: &[(KeyCode, HeuristicFn, &str)] = &[
     (KeyCode::Key8, manhattan_tiebreaker, "Manhattan with Tiebreaker"),
 ];
 
-pub const MAZE_HEIGHT: usize = 61;
+pub const MAZE_HEIGHT: usize = 101;
 pub const MAZE_WIDTH: usize = 2 * MAZE_HEIGHT - 1;
 
 pub const UI_HEIGHT: i32 = 120;
 
-const PIXEL_PER_TILE: i32 = 6;
+const PIXEL_PER_TILE: i32 = 40 - ((MAZE_HEIGHT - 11) as f32 / 2.0 * 38.0 / 46.0) as i32;
 
 pub const WINDOW_WIDTH: i32 = MAZE_WIDTH as i32 * PIXEL_PER_TILE;
 pub const WINDOW_HEIGHT: i32 = MAZE_HEIGHT as i32 * PIXEL_PER_TILE + UI_HEIGHT;

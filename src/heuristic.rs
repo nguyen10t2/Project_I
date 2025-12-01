@@ -52,14 +52,20 @@ pub fn direction(a: Node, goal: Node, width: usize, height: usize) -> f32 {
     let dx = (goal.x as isize - a.x as isize) as f32;
     let dy = (goal.y as isize - a.y as isize) as f32;
 
-    let scaled_dx = dx / width as f32;
-    let scaled_dy = dy / height as f32;
+    let angle = dy.atan2(dx);
 
-    scaled_dy.atan2(scaled_dx)
+    let angle = (angle + 2.0 * PI) % (2.0 * PI);
+
+    angle
 }
 
 pub fn manhattan_tiebreaker(a: Node, b: Node) -> f32 {
     let h = (a.x.abs_diff(b.x) + a.y.abs_diff(b.y)) as f32;
     let dir = direction(a, b, MAZE_WIDTH, MAZE_HEIGHT);
-    h * 1.1 + dir
+    
+    let ideal_sector = (1.0_f32).atan2(2.0);
+
+    let tiebreaker = (dir - ideal_sector).abs() / (2.0 * PI);
+
+    h + h * tiebreaker
 }
