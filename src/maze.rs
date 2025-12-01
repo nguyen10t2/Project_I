@@ -2,13 +2,15 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 
+use std::vec;
 
-use macroquad::prelude::*;
 use ::rand::Rng;
-use ::rand::seq::SliceRandom;
 use ::rand::prelude::IndexedRandom;
+use ::rand::seq::SliceRandom;
+use macroquad::prelude::*;
 
 use crate::constants::{DENSITY, TILE_SIZE};
+use crate::helper::{find_set, union_sets};
 use crate::node::Node;
 
 #[derive(Clone, Copy)]
@@ -16,6 +18,7 @@ pub enum Algorithm {
     RecursiveBacktracker,
     Prims,
     Braid,
+    Eller,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -51,15 +54,20 @@ impl Maze {
         match alo {
             Algorithm::Prims => {
                 Maze::generate_prims(&mut grid, &mut rng, start.x, start.y, width, height);
-            },
+            }
             Algorithm::RecursiveBacktracker => {
                 grid[start.y][start.x] = Tile::Path;
                 Maze::recursive_backtracker(&mut grid, &mut rng, start.x, start.y, width, height);
-            },
+            }
             Algorithm::Braid => {
                 grid[start.y][start.x] = Tile::Path;
                 Maze::generate_prims(&mut grid, &mut rng, start.x, start.y, width, height);
-                
+
+                Maze::add_cycles(&mut grid, &mut rng, width, height, DENSITY);
+            }
+            Algorithm::Eller => {
+                Maze::generate_eller(&mut grid, &mut rng, width, height);
+
                 Maze::add_cycles(&mut grid, &mut rng, width, height, DENSITY);
             }
         }
@@ -216,6 +224,101 @@ impl Maze {
         }
     }
 
+    pub fn generate_eller(
+        grid: &mut Vec<Vec<Tile>>,
+        rng: &mut ::rand::rngs::ThreadRng,
+        width: usize,
+        height: usize,
+    ) {
+        use std::collections::HashMap;
+
+        let cols: Vec<usize> = (1..width - 1).step_by(2).collect();
+        let num_cols = cols.len();
+
+        if num_cols == 0 {
+            return;
+        }
+
+        let mut cur_set: Vec<usize> = (0..num_cols).collect();
+        let mut next_set_id = num_cols;
+
+        for row in (1..height - 1).step_by(2) {
+            let last_row = row + 2 >= height - 1;
+
+            for i in 0..num_cols {
+                grid[row][cols[i]] = Tile::Path;
+            }
+
+            for i in 0..num_cols - 1 {
+                let col = cols[i];
+
+                if cur_set[i] != cur_set[i + 1] {
+                    let should_merge = if last_row { 
+                        true 
+                    } else { 
+                        rng.random_bool(DENSITY as f64) 
+                    };
+
+                    if should_merge {
+                        grid[row][col + 1] = Tile::Path;
+
+                        let old_set = cur_set[i + 1];
+                        let new_set = cur_set[i];
+                        for j in 0..num_cols {
+                            if cur_set[j] == old_set {
+                                cur_set[j] = new_set;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if last_row {
+                break;
+            }
+
+            let mut set_to_cols: HashMap<usize, Vec<usize>> = HashMap::new();
+            for i in 0..num_cols {
+                set_to_cols
+                    .entry(cur_set[i])
+                    .or_insert_with(Vec::new)
+                    .push(i);
+            }
+
+            let mut next_row: Vec<usize> = Vec::with_capacity(num_cols);
+            for _ in 0..num_cols {
+                next_row.push(next_set_id);
+                next_set_id += 1;
+            }
+
+            for (set_id, connected_cols) in set_to_cols.iter() {
+                let mut shuffled_cols = connected_cols.clone();
+                shuffled_cols.shuffle(rng);
+
+                let mut connected_count = 0;
+
+                for &col_idx in shuffled_cols.iter() {
+                    let col = cols[col_idx];
+
+                    let should_connect = if connected_count == 0 {
+                        true
+                    } else {
+                        rng.random_bool(DENSITY as f64)
+                    };
+
+                    if should_connect {
+                        grid[row + 1][col] = Tile::Path;
+                        grid[row + 2][col] = Tile::Path;
+                        next_row[col_idx] = *set_id;
+                        connected_count += 1;
+                    }
+                }
+            }
+
+            cur_set = next_row;
+        }
+    }
+    
     pub fn add_cycles(
         grid: &mut Vec<Vec<Tile>>,
         rng: &mut ::rand::rngs::ThreadRng,
@@ -254,7 +357,7 @@ impl Maze {
         for i in 0..remove_count {
             let node = dead_ends[i];
 
-            let mut potential_walls= Vec::new();
+            let mut potential_walls = Vec::new();
 
             let jump_dirs = [(0, -2), (0, 2), (-2, 0), (2, 0)];
 

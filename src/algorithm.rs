@@ -7,7 +7,7 @@ use std::collections::{BinaryHeap, HashMap};
 use std::path;
 use macroquad::prelude::*;
 
-use crate::heuristic::{self, mahattan};
+use crate::heuristic::*;
 use crate::maze::{Maze, Tile};
 use crate::node::Node;
 use crate::constants::{TILE_SIZE, COLOR_PATH};

@@ -7,6 +7,7 @@ mod constants;
 mod heuristic;
 mod maze;
 mod node;
+mod helper;
 
 use macroquad::prelude::*;
 use std::thread::sleep;
@@ -37,7 +38,7 @@ async fn main() {
     let step_delay = STEP_DELAY_SEC;
     let mut time_accumulator = 0f64;
 
-    let mut current_heuristic: fn(Node, Node) -> f32 = heuristic::mahattan;
+    let mut current_heuristic: fn(Node, Node) -> f32 = heuristic::manhattan;
     let mut heuristic_name = "Manhattan";
 
     let mut start_time = Instant::now();
@@ -99,6 +100,15 @@ async fn main() {
             steps_count = 0;
         }
 
+        if is_key_pressed(KeyCode::E) {
+            current_algo = Algorithm::Eller;
+            maze = Maze::new(MAZE_WIDTH, MAZE_HEIGHT, current_algo);
+            visualizer = AStarVisualizer::new(&maze);
+            start_time = Instant::now();
+            elapsed_duration = Duration::ZERO;
+            steps_count = 0;
+        }
+        
         if !visualizer.found {
             elapsed_duration = start_time.elapsed();
             if step_delay <= 0.0001 {
@@ -183,7 +193,7 @@ fn draw_ui(
     );
 
     draw_text(
-        "[R] Backtracker | [P] Prim's Algo | [B] Braid Maze",
+        "[R] Backtracker | [P] Prim's Algo | [B] Prims Braid | [E] Eller Braids",
         text_x,
         ui_y_start + 25.0 + line_spacing * 2.0,
         20.0,
