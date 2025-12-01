@@ -104,7 +104,7 @@ pub const STEPS_PER_FRAME: usize = 120;   // Steps per frame
 
 ### ✨ Tính năng
 
-- 🎲 **Tạo mê cung ngẫu nhiên** - Sử dụng thuật toán quay lui đệ quy
+- 🎲 **Tạo mê cung ngẫu nhiên** - Sử dụng quay lui đệ quy, prim, braid để đục đường đi ngẫu nhiên (mặc định sử dụng prim)
 - 🔍 **Tìm đường A\*** - Thuật toán đường đi ngắn nhất hiệu quả
 - 📊 **8 heuristic khác nhau** - So sánh các phương pháp tính khoảng cách
 - ⏱️ **Thống kê thời gian thực** - Theo dõi thời gian và số bước
