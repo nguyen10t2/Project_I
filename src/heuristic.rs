@@ -43,10 +43,10 @@ pub fn euclidean_squared(a: Node, b: Node) -> f32 {
 
 pub fn weighted_manhattan(a: Node, b: Node) -> f32 {
     let h = (a.x.abs_diff(b.x) + a.y.abs_diff(b.y)) as f32;
-    h * 2.0
+    h * 5.0
 }
 
-pub fn manhattan_tiebreaker(a: Node, b: Node) -> f32 {
+pub fn weighted_manhattan_tiebreaker(a: Node, b: Node) -> f32 {
     let h = (a.x.abs_diff(b.x) + a.y.abs_diff(b.y)) as f32;
-    h * 1.001 
+    h * 10.0
 }

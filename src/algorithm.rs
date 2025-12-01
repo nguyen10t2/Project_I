@@ -4,10 +4,13 @@
 
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap};
+use std::path;
+use macroquad::prelude::*;
 
 use crate::heuristic::{self, mahattan};
 use crate::maze::{Maze, Tile};
 use crate::node::Node;
+use crate::constants::{TILE_SIZE, COLOR_PATH};
 
 type HeuristicFn = fn(Node, Node) -> f32;
 
@@ -121,5 +124,33 @@ impl AStarVisualizer {
         }
         total_path.reverse();
         total_path
+    }
+
+    pub fn draw(&self, maze: &Maze) {
+        for node in self.came_from.keys() {
+            if *node != maze.start && *node != maze.goal {
+                draw_rectangle(
+                    node.x as f32 * TILE_SIZE,
+                    node.y as f32 * TILE_SIZE,
+                    TILE_SIZE,
+                    TILE_SIZE,
+                    COLOR_PATH,
+                );
+            }
+        }
+
+        if let Some(path) = &self.path {
+            for node in path {
+                if *node != maze.start && *node != maze.goal {
+                    draw_rectangle(
+                        node.x as f32 * TILE_SIZE,
+                        node.y as f32 * TILE_SIZE,
+                        TILE_SIZE,
+                        TILE_SIZE,
+                        GREEN,
+                    );
+                }
+            }
+        }
     }
 }
