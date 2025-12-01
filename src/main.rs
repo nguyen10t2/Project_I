@@ -4,6 +4,7 @@
 
 mod algorithm;
 mod constants;
+mod generator;
 mod heuristic;
 mod maze;
 mod node;
@@ -15,7 +16,8 @@ use std::time::{Duration, Instant};
 
 use crate::algorithm::AStarVisualizer;
 use crate::constants::*;
-use crate::maze::{Algorithm, Maze, Tile};
+use crate::generator::{Algorithm, MazeVisualizer};
+use crate::maze::{Maze, Tile};
 use crate::node::Node;
 
 fn window_conf() -> Conf {
@@ -27,13 +29,20 @@ fn window_conf() -> Conf {
     }
 }
 
+enum AppState {
+    Generating,
+    Solving,
+}
+
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut current_algo = Algorithm::RecursiveBacktracker;
 
-    let mut maze = Maze::new(MAZE_WIDTH, MAZE_HEIGHT, current_algo);
-
-    let mut visualizer = AStarVisualizer::new(&maze);
+    let mut maze = Maze::new(MAZE_WIDTH, MAZE_HEIGHT);
+    let mut maze_visualizer = MazeVisualizer::new(&mut maze, current_algo);
+    let mut app_state = AppState::Generating;
+    
+    let mut astar_visualizer: Option<AStarVisualizer> = None;
 
     let step_delay = STEP_DELAY_SEC;
     let mut time_accumulator = 0f64;
@@ -48,100 +57,146 @@ async fn main() {
     loop {
         clear_background(LIGHTGRAY);
 
+        let mut reset = false;
+
         for (key, func, name) in HEURISTIC {
             if is_key_pressed(*key) {
                 current_heuristic = *func;
                 heuristic_name = *name;
-                visualizer = AStarVisualizer::new(&maze);
-                time_accumulator = 0.0;
-
-                start_time = Instant::now();
-                elapsed_duration = Duration::ZERO;
-                steps_count = 0;
+                if let AppState::Solving = app_state {
+                    astar_visualizer = Some(AStarVisualizer::new(&maze));
+                    time_accumulator = 0.0;
+                    start_time = Instant::now();
+                    elapsed_duration = Duration::ZERO;
+                    steps_count = 0;
+                }
                 break;
             }
         }
 
         if is_key_pressed(KeyCode::R) {
             current_algo = Algorithm::RecursiveBacktracker;
-            maze = Maze::new(MAZE_WIDTH, MAZE_HEIGHT, current_algo);
-            visualizer = AStarVisualizer::new(&maze);
-
-            start_time = Instant::now();
-            elapsed_duration = Duration::ZERO;
-            steps_count = 0;
+            reset = true;
         }
 
         if is_key_pressed(KeyCode::P) {
             current_algo = Algorithm::Prims;
-            maze = Maze::new(MAZE_WIDTH, MAZE_HEIGHT, current_algo);
-            visualizer = AStarVisualizer::new(&maze);
-
-            start_time = Instant::now();
-            elapsed_duration = Duration::ZERO;
-            steps_count = 0;
+            reset = true;
         }
 
         if is_key_pressed(KeyCode::B) {
             current_algo = Algorithm::Braid;
-            maze = Maze::new(MAZE_WIDTH, MAZE_HEIGHT, current_algo);
-            visualizer = AStarVisualizer::new(&maze);
-            start_time = Instant::now();
-            elapsed_duration = Duration::ZERO;
-            steps_count = 0;
+            reset = true;
         }
 
         if is_key_pressed(KeyCode::Space) {
-            maze = Maze::new(MAZE_WIDTH, MAZE_HEIGHT, current_algo);
-            visualizer = AStarVisualizer::new(&maze);
-
-            start_time = Instant::now();
-            elapsed_duration = Duration::ZERO;
-            steps_count = 0;
+            reset = true;
         }
 
         if is_key_pressed(KeyCode::E) {
             current_algo = Algorithm::Eller;
-            maze = Maze::new(MAZE_WIDTH, MAZE_HEIGHT, current_algo);
-            visualizer = AStarVisualizer::new(&maze);
+            reset = true;
+        }
+
+        if reset {
+            maze = Maze::new(MAZE_WIDTH, MAZE_HEIGHT);
+            maze_visualizer = MazeVisualizer::new(&mut maze, current_algo);
+            app_state = AppState::Generating;
+            astar_visualizer = None;
             start_time = Instant::now();
             elapsed_duration = Duration::ZERO;
             steps_count = 0;
+            time_accumulator = 0.0;
+        }
+
+        if is_key_pressed(KeyCode::A) {
+            if let AppState::Generating = app_state {
+                while !maze_visualizer.done {
+                    maze_visualizer.step(&mut maze);
+                }
+            }
         }
         
-        if !visualizer.found {
-            elapsed_duration = start_time.elapsed();
-            if step_delay <= 0.0001 {
-                time_accumulator += get_frame_time() as f64;
-                for _ in 0..STEPS_PER_FRAME {
-                    visualizer.step(&maze, current_heuristic);
-                    steps_count += 1;
-                    time_accumulator = 0.0;
-                    if visualizer.found {
-                        elapsed_duration = start_time.elapsed();
-                        break;
+        match app_state {
+            AppState::Generating => {
+                if !maze_visualizer.done {
+                    elapsed_duration = start_time.elapsed();
+                    if step_delay <= 0.0001 {
+                        for _ in 0..MAZE_GEN_STEPS_PER_FRAME {
+                            maze_visualizer.step(&mut maze);
+                            steps_count += 1;
+                            if maze_visualizer.done {
+                                break;
+                            }
+                        }
+                        time_accumulator = 0.0;
+                    } else {
+                        time_accumulator += get_frame_time() as f64;
+                        if time_accumulator >= step_delay {
+                            maze_visualizer.step(&mut maze);
+                            steps_count += 1;
+                            time_accumulator -= step_delay;
+                        }
                     }
                 }
-            } else {
-                time_accumulator += get_frame_time() as f64;
-                if time_accumulator >= step_delay {
-                    visualizer.step(&maze, current_heuristic);
-                    steps_count += 1;
-                    time_accumulator -= step_delay;
+                
+                if maze_visualizer.done {
+                    app_state = AppState::Solving;
+                    astar_visualizer = Some(AStarVisualizer::new(&maze));
+                    start_time = Instant::now();
+                    elapsed_duration = Duration::ZERO;
+                    steps_count = 0;
+                }
+            }
+            AppState::Solving => {
+                if let Some(visualizer) = &mut astar_visualizer {
+                    if !visualizer.found {
+                        elapsed_duration = start_time.elapsed();
+                        if step_delay <= 0.0001 {
+                            time_accumulator += get_frame_time() as f64;
+                            for _ in 0..STEPS_PER_FRAME {
+                                visualizer.step(&maze, current_heuristic);
+                                steps_count += 1;
+                                time_accumulator = 0.0;
+                                if visualizer.found {
+                                    elapsed_duration = start_time.elapsed();
+                                    break;
+                                }
+                            }
+                        } else {
+                            time_accumulator += get_frame_time() as f64;
+                            if time_accumulator >= step_delay {
+                                visualizer.step(&maze, current_heuristic);
+                                steps_count += 1;
+                                time_accumulator -= step_delay;
+                            }
+                        }
+                    }
                 }
             }
         }
 
         maze.draw();
 
-        visualizer.draw(&maze);
+        if let Some(visualizer) = &astar_visualizer {
+            visualizer.draw(&maze);
+        }
+
+        let found = astar_visualizer.as_ref().map_or(false, |v| v.found);
+        let distance = astar_visualizer.as_ref().map_or(0, |v| v.path.as_ref().map_or(0, |p| p.len()));
+        
+        let status_text = match app_state {
+            AppState::Generating => "Generating Maze...",
+            AppState::Solving => if found { "Solved!" } else { "Solving..." },
+        };
 
         draw_ui(
             heuristic_name,
             elapsed_duration,
             steps_count,
-            visualizer.path.as_ref().map_or(0, |p| p.len()),
-            visualizer.found,
+            distance,
+            found,
+            status_text,
         );
 
         next_frame().await;
@@ -154,6 +209,7 @@ fn draw_ui(
     steps_count: usize,
     distance: usize,
     found: bool,
+    status: &str,
 ) {
     use crate::constants::{MAZE_HEIGHT, TILE_SIZE, UI_HEIGHT, WINDOW_WIDTH};
 
@@ -171,7 +227,7 @@ fn draw_ui(
     let line_spacing = 25.0;
 
     draw_text(
-        format!("Mode: {}", heuristic_name).as_str(),
+        format!("Mode: {} | Status: {}", heuristic_name, status).as_str(),
         text_x,
         ui_y_start + 25.0,
         20.0,
@@ -202,7 +258,7 @@ fn draw_ui(
 
     draw_text(
         format!(
-            "[1-{}] Change Heuris | [Space] New Maze",
+            "[1-{}] Change Heuris | [Space] New Maze | [A] Skip Gen",
             HEURISTIC.len()
         )
         .as_str(),

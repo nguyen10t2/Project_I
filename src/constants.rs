@@ -35,6 +35,8 @@ pub const TILE_SIZE: f32 = PIXEL_PER_TILE as f32;
 
 pub const STEP_DELAY_SEC: f64 = 0.0;
 pub const STEPS_PER_FRAME: usize = 60;
+pub const MAZE_GEN_STEPS_PER_FRAME: usize = 60;
+
 
 pub const DENSITY: f32 = 0.4;
 
