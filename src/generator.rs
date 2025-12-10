@@ -254,7 +254,6 @@ impl MazeVisualizer {
                                         self.state = GeneratorState::Finished;
                                     }
                                 } else {
-                                    // Prepare vertical connections
                                     let mut set_to_cols: HashMap<usize, Vec<usize>> = HashMap::new();
                                     for i in 0..num_cols {
                                         set_to_cols.entry(sets[i]).or_default().push(i);
@@ -287,7 +286,6 @@ impl MazeVisualizer {
                                             }
                                         }
                                     }
-                                    // Shuffle verticals so they appear randomly, not set by set
                                     verticals.shuffle(&mut rng);
 
                                     *phase = EllerPhase::Vertical {

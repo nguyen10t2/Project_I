@@ -53,8 +53,8 @@ impl Maze {
         for y in 0..self.height {
             for x in 0..self.width {
                 let color = match self.grid[y][x] {
-                    Tile::Wall => BLACK,
-                    Tile::Path => WHITE,
+                    Tile::Wall => PURPLE,
+                    Tile::Path => BLACK,
                     Tile::Start => GREEN,
                     Tile::Goal => RED,
                 };

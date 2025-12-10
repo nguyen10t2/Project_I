@@ -20,12 +20,12 @@ pub const HEURISTIC: &[(KeyCode, HeuristicFn, &str)] = &[
     (KeyCode::Key6, manhattan_tiebreaker, "Manhattan with Tiebreaker"),
 ];
 
-pub const MAZE_HEIGHT: usize = 81;
+pub const MAZE_HEIGHT: usize = 161;
 pub const MAZE_WIDTH: usize = 2 * MAZE_HEIGHT - 1;
 
 pub const UI_HEIGHT: i32 = 120;
 
-const PIXEL_PER_TILE: i32 = 4;
+const PIXEL_PER_TILE: i32 = 3;
 
 pub const WINDOW_WIDTH: i32 = MAZE_WIDTH as i32 * PIXEL_PER_TILE;
 pub const WINDOW_HEIGHT: i32 = MAZE_HEIGHT as i32 * PIXEL_PER_TILE + UI_HEIGHT;
@@ -34,11 +34,11 @@ pub const WINDOW_HEIGHT: i32 = MAZE_HEIGHT as i32 * PIXEL_PER_TILE + UI_HEIGHT;
 pub const TILE_SIZE: f32 = PIXEL_PER_TILE as f32;
 
 pub const STEP_DELAY_SEC: f64 = 0.0;
-pub const STEPS_PER_FRAME: usize = 60;
-pub const MAZE_GEN_STEPS_PER_FRAME: usize = 60;
+pub const STEPS_PER_FRAME: usize = 100;
+pub const MAZE_GEN_STEPS_PER_FRAME: usize = 100;
 
 
-pub const DENSITY: f32 = 0.4;
+pub const DENSITY: f32 = 0.6;
 
 pub const COLOR_PATH: Color  = Color::new(0.1, 0.8, 1.0, 0.5);
-pub const CYAN: Color       = Color::new(0.0, 1.0, 1.0, 1.0);
+pub const CYAN: Color       = Color::new(0.5, 1.0, 1.0, 1.0);
