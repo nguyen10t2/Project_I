@@ -2,15 +2,15 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 
+use macroquad::prelude::*;
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap};
 use std::path;
-use macroquad::prelude::*;
 
+use crate::constants::{COLOR_PATH, TILE_SIZE};
 use crate::heuristic::*;
 use crate::maze::{Maze, Tile};
 use crate::node::Node;
-use crate::constants::{TILE_SIZE, COLOR_PATH};
 
 type HeuristicFn = fn(Node, Node) -> f32;
 
@@ -24,7 +24,10 @@ impl Eq for State {}
 
 impl Ord for State {
     fn cmp(&self, other: &Self) -> Ordering {
-        other.cost.partial_cmp(&self.cost).unwrap_or(Ordering::Equal)
+        other
+            .cost
+            .partial_cmp(&self.cost)
+            .unwrap_or(Ordering::Equal)
     }
 }
 
@@ -34,13 +37,12 @@ impl PartialOrd for State {
     }
 }
 
-
 pub struct AStarVisualizer {
     pub open: BinaryHeap<State>,
     pub came_from: HashMap<Node, Node>,
     pub g_score: HashMap<Node, f32>,
     pub path: Option<Vec<Node>>,
-    pub found: bool,       
+    pub found: bool,
     pub start: Node,
     pub goal: Node,
 }
@@ -126,14 +128,14 @@ impl AStarVisualizer {
         total_path
     }
 
-    pub fn draw(&self, maze: &Maze) {
+    pub fn draw(&self, maze: &Maze, cell_size: f32) {
         for node in self.came_from.keys() {
             if *node != maze.start && *node != maze.goal {
                 draw_rectangle(
-                    node.x as f32 * TILE_SIZE,
-                    node.y as f32 * TILE_SIZE,
-                    TILE_SIZE,
-                    TILE_SIZE,
+                    node.x as f32 * cell_size,
+                    node.y as f32 * cell_size,
+                    cell_size,
+                    cell_size,
                     COLOR_PATH,
                 );
             }
@@ -143,14 +145,76 @@ impl AStarVisualizer {
             for node in path {
                 if *node != maze.start && *node != maze.goal {
                     draw_rectangle(
-                        node.x as f32 * TILE_SIZE,
-                        node.y as f32 * TILE_SIZE,
-                        TILE_SIZE,
-                        TILE_SIZE,
+                        node.x as f32 * cell_size,
+                        node.y as f32 * cell_size,
+                        cell_size,
+                        cell_size,
                         GREEN,
                     );
                 }
             }
         }
+    }
+
+    pub fn find_path(
+        maze: &Maze,
+        start: Node,
+        goal: Node,
+        heuristic: HeuristicFn,
+        obstacles: &[crate::obstacle::DynamicObstacle],
+    ) -> Option<Vec<Node>> {
+        let mut open = BinaryHeap::new();
+        let mut g_score = HashMap::new();
+        let mut came_from = HashMap::new();
+
+        g_score.insert(start, 0.0);
+        open.push(State {
+            cost: 0.0,
+            pos: start,
+        });
+
+        while let Some(State { cost: _, pos }) = open.pop() {
+            if pos == goal {
+                return Some(Self::reconstruct_path(&came_from, pos));
+            }
+
+            let current_g = *g_score.get(&pos).unwrap_or(&f32::INFINITY);
+            let dirs = [(0, 1), (1, 0), (0, -1), (-1, 0)];
+
+            for (dx, dy) in dirs {
+                let nx = pos.x as isize + dx;
+                let ny = pos.y as isize + dy;
+
+                if !Maze::in_bounds(nx, ny, maze.width, maze.height) {
+                    continue;
+                }
+
+                let neighbor = Node::new(nx as usize, ny as usize);
+
+                if maze.grid[neighbor.y][neighbor.x] == Tile::Wall {
+                    continue;
+                }
+
+                // Obstacle check
+                if obstacles.iter().any(|obs| obs.position == neighbor) && neighbor != goal {
+                    continue;
+                }
+
+                let tentative_g = current_g + 1.0;
+                let neighbor_g = *g_score.get(&neighbor).unwrap_or(&f32::INFINITY);
+
+                if tentative_g < neighbor_g {
+                    came_from.insert(neighbor, pos);
+                    g_score.insert(neighbor, tentative_g);
+
+                    let f_score = tentative_g + heuristic(neighbor, goal);
+                    open.push(State {
+                        cost: f_score,
+                        pos: neighbor,
+                    });
+                }
+            }
+        }
+        None
     }
 }

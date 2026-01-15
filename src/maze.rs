@@ -2,8 +2,8 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 
-use std::vec;
 use macroquad::prelude::*;
+use std::vec;
 
 use crate::constants::TILE_SIZE;
 use crate::node::Node;
@@ -49,7 +49,7 @@ impl Maze {
         x > 0 && x < (w as isize - 1) && y > 0 && y < (h as isize - 1)
     }
 
-    pub fn draw(&self) {
+    pub fn draw(&self, cell_size: f32) {
         for y in 0..self.height {
             for x in 0..self.width {
                 let color = match self.grid[y][x] {
@@ -60,10 +60,10 @@ impl Maze {
                 };
 
                 draw_rectangle(
-                    x as f32 * TILE_SIZE,
-                    y as f32 * TILE_SIZE,
-                    TILE_SIZE,
-                    TILE_SIZE,
+                    x as f32 * cell_size,
+                    y as f32 * cell_size,
+                    cell_size,
+                    cell_size,
                     color,
                 );
             }
